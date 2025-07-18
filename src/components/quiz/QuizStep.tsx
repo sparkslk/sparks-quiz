@@ -50,42 +50,45 @@ const QuizStep: React.FC<QuizStepProps> = ({
 
     useEffect(() => {
         // Set initial values from store
-        const currentValue = getCurrentValue();
-        if (question.inputType === 'checkbox') {
+        if (question.fieldName === 'gender') {
+            setValue('gender', quizData.gender || '');
+            setValue('age', quizData.age || '');
+        } else if (question.inputType === 'checkbox') {
+            const currentValue = getCurrentValue();
             setValue('selections', currentValue);
         } else if (question.inputType === 'range') {
+            const currentValue = getCurrentValue();
             setValue('rating', currentValue || 5);
-        } else if (question.fieldName === 'gender') {
-            setValue('gender', currentValue);
-        } else if (question.fieldName === 'age') {
-            setValue('age', currentValue);
         } else if (question.inputType === 'textarea') {
+            const currentValue = getCurrentValue();
             setValue('expectations', currentValue);
-        } else {
-            setValue('selection', currentValue);
+        } else if (question.fieldName === 'commitmentLevel') {
+            const currentValue = getCurrentValue();
             setValue('commitment', currentValue);
+        } else {
+            const currentValue = getCurrentValue();
+            setValue('selection', currentValue);
         }
-    }, [question.fieldName, question.inputType, setValue]);
+    }, [question.fieldName, question.inputType, setValue, quizData]);
 
     const onSubmit = (data: any) => {
         // Map form data to quiz data based on field type
-        let valueToStore;
-
-        if (question.inputType === 'checkbox') {
-            valueToStore = data.selections || [];
+        if (question.fieldName === 'gender') {
+            // For the first question, store both gender and age
+            updateQuizData('gender', data.gender);
+            updateQuizData('age', data.age);
+        } else if (question.inputType === 'checkbox') {
+            updateQuizData(question.fieldName as any, data.selections || []);
         } else if (question.inputType === 'range') {
-            valueToStore = data.rating;
-        } else if (question.fieldName === 'gender') {
-            valueToStore = data.gender;
-        } else if (question.fieldName === 'age') {
-            valueToStore = data.age;
+            updateQuizData(question.fieldName as any, data.rating);
         } else if (question.inputType === 'textarea') {
-            valueToStore = data.expectations;
+            updateQuizData(question.fieldName as any, data.expectations);
+        } else if (question.fieldName === 'commitmentLevel') {
+            updateQuizData(question.fieldName as any, data.commitment);
         } else {
-            valueToStore = data.selection || data.commitment;
+            updateQuizData(question.fieldName as any, data.selection);
         }
 
-        updateQuizData(question.fieldName as any, valueToStore);
         onNext();
     };
 
