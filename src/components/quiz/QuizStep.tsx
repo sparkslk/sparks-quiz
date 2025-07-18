@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuizStore } from '@/store/quizStore';
+import { useQuizStore, QuizData } from '@/store/quizStore';
 import { QuizQuestion } from '@/lib/quizData';
 import { FaRegCircle, FaDotCircle } from 'react-icons/fa';
 import { z } from 'zod';
 
 interface QuizStepProps {
     question: QuizQuestion;
-    validationSchema: z.ZodObject<any>;
+    validationSchema: z.ZodObject<z.ZodRawShape>;
     isLastStep: boolean;
     onNext: () => void;
     onPrevious: () => void;
@@ -26,14 +26,13 @@ const QuizStep: React.FC<QuizStepProps> = ({
 }) => {
     const { currentStep, quizData, updateQuizData } = useQuizStore();
 
-    // Get the current value from store
-    const getCurrentValue = () => {
+    const getCurrentValue = useCallback(() => {
         const value = quizData[question.fieldName as keyof typeof quizData];
         if (question.inputType === 'checkbox') {
             return Array.isArray(value) ? value : [];
         }
         return value || (question.inputType === 'range' ? 5 : '');
-    };
+    }, [quizData, question.fieldName, question.inputType]);
 
     const {
         register,
@@ -49,7 +48,6 @@ const QuizStep: React.FC<QuizStepProps> = ({
     const watchedValue = watch();
 
     useEffect(() => {
-        // Set initial values from store
         if (question.fieldName === 'gender') {
             setValue('gender', quizData.gender || '');
             setValue('age', quizData.age || '');
@@ -69,24 +67,24 @@ const QuizStep: React.FC<QuizStepProps> = ({
             const currentValue = getCurrentValue();
             setValue('selection', currentValue);
         }
-    }, [question.fieldName, question.inputType, setValue, quizData]);
+    }, [question.fieldName, question.inputType, setValue, quizData, getCurrentValue]);
 
-    const onSubmit = (data: any) => {
-        // Map form data to quiz data based on field type
-        if (question.fieldName === 'gender') {
-            // For the first question, store both gender and age
-            updateQuizData('gender', data.gender);
-            updateQuizData('age', data.age);
+    const onSubmit = (data: z.infer<typeof validationSchema>) => {
+        const fieldName = question.fieldName as keyof QuizData;
+
+        if (fieldName === 'gender') {
+            updateQuizData('gender', data.gender as string);
+            updateQuizData('age', data.age as number);
         } else if (question.inputType === 'checkbox') {
-            updateQuizData(question.fieldName as any, data.selections || []);
+            updateQuizData(fieldName, data.selections as string[] || []);
         } else if (question.inputType === 'range') {
-            updateQuizData(question.fieldName as any, data.rating);
+            updateQuizData(fieldName, data.rating as number);
         } else if (question.inputType === 'textarea') {
-            updateQuizData(question.fieldName as any, data.expectations);
-        } else if (question.fieldName === 'commitmentLevel') {
-            updateQuizData(question.fieldName as any, data.commitment);
+            updateQuizData(fieldName, data.expectations as string);
+        } else if (fieldName === 'commitmentLevel') {
+            updateQuizData(fieldName, data.commitment as string);
         } else {
-            updateQuizData(question.fieldName as any, data.selection);
+            updateQuizData(fieldName, data.selection as string);
         }
 
         onNext();
@@ -107,7 +105,7 @@ const QuizStep: React.FC<QuizStepProps> = ({
         }
 
         setValue('selections', newSelections);
-        updateQuizData(question.fieldName as any, newSelections);
+        updateQuizData(question.fieldName as keyof QuizData, newSelections);
     };
 
     const renderAgeInput = () => (
@@ -275,9 +273,9 @@ const QuizStep: React.FC<QuizStepProps> = ({
                         )}
                         <button
                             type="submit"
-                            className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 font-medium ml-auto"
+                            className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 font-medium disabled:bg-gray-400"
                         >
-                            {isLastStep ? 'Complete Quiz' : 'Next'}
+                            {isLastStep ? 'Finish' : 'Next'}
                         </button>
                     </div>
                 </form>

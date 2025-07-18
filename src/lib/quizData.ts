@@ -3,10 +3,6 @@ import {
     FaFemale,
     FaGenderless,
     FaBatteryEmpty,
-    FaBatteryQuarter,
-    FaBatteryHalf,
-    FaBatteryThreeQuarters,
-    FaBatteryFull,
     FaCloud,
     FaSun,
     FaSmile,
@@ -37,16 +33,15 @@ import {
     FaHeart,
     FaHandsHelping,
     FaUserFriends,
-    FaVideo,
-    FaPhoneAlt
 } from 'react-icons/fa';
+import { ElementType } from 'react';
 
 export interface QuizQuestion {
     id: number;
     question: string;
     description?: string;
     inputType: 'radio' | 'checkbox' | 'text' | 'number' | 'range' | 'textarea';
-    options?: { value: string; label: string; icon?: any }[];
+    options?: { value: string; label: string; icon?: ElementType }[];
     fieldName: string;
     category: 'personal' | 'wellbeing' | 'habits' | 'program';
 }
